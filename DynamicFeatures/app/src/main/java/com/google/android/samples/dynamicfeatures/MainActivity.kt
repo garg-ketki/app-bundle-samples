@@ -46,7 +46,7 @@ class MainActivity : BaseSplitActivity() {
             // We always request the installation of a single language in this sample
             state.languages().first()
         } else state.moduleNames().joinToString(" - ")
-
+        Log.d(TAG, "$names ${state.status()}")
         when (state.status()) {
             SplitInstallSessionStatus.DOWNLOADING -> {
                 //  In order to see this, the application has to be uploaded to the Play Store.
@@ -113,7 +113,12 @@ class MainActivity : BaseSplitActivity() {
         View.OnClickListener {
             when (it.id) {
                 R.id.btn_load_kotlin -> loadAndLaunchModule(moduleKotlin)
-                R.id.btn_load_java -> loadAndLaunchModule(moduleJava)
+                R.id.btn_load_java -> {
+                    Log.d(TAG, "On click of java button")
+                    loadAndLaunchModule(moduleKotlin)
+                    loadAndLaunchModule(moduleJava)
+                    loadAndLaunchModule(moduleAssets)
+                }
                 R.id.btn_load_assets -> loadAndLaunchModule(moduleAssets)
                 R.id.btn_start_maxsdk -> {
                     /*
@@ -178,6 +183,7 @@ class MainActivity : BaseSplitActivity() {
     private fun loadAndLaunchModule(name: String) {
         updateProgressMessage(getString(R.string.loading_module, name))
         // Skip loading if the module already is installed. Perform success action directly.
+        Log.d(TAG, "Installed modules ${manager.installedModules}")
         if (manager.installedModules.contains(name)) {
             updateProgressMessage(getString(R.string.already_installed))
             onSuccessfulLoad(name, launch = true)
@@ -190,7 +196,12 @@ class MainActivity : BaseSplitActivity() {
                 .build()
 
         // Load and install the requested feature module.
-        manager.startInstall(request)
+        Log.d(TAG, "Request to download module $name")
+        manager.startInstall(request).addOnSuccessListener {
+            toastAndLog("Loading ${request.moduleNames}")
+        }.addOnFailureListener {
+            toastAndLog("Failed loading $request.moduleNames $it")
+        }
 
         updateProgressMessage(getString(R.string.starting_install_for, name))
     }
@@ -291,7 +302,7 @@ class MainActivity : BaseSplitActivity() {
      * @param launch `true` if the feature module should be launched, else `false`.
      */
     private fun onSuccessfulLoad(moduleName: String, launch: Boolean) {
-        if (launch) {
+        /*if (launch) {
             when (moduleName) {
                 moduleKotlin -> launchActivity(KOTLIN_SAMPLE_CLASSNAME)
                 moduleJava -> launchActivity(JAVA_SAMPLE_CLASSNAME)
@@ -303,7 +314,7 @@ class MainActivity : BaseSplitActivity() {
             }
         }
 
-        displayButtons()
+        displayButtons()*/
     }
 
     private fun onSuccessfulLanguageLoad(lang: String) {
